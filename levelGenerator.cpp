@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <windows.h>
 #include <random>
+#include <string>
 
 #define EMPTY_TAG '1'
 #define WALL_TAG '2'
@@ -19,6 +20,7 @@ private:
     int x, y;
 public:
     Point2D(int _x, int _y);
+    Point2D(const Point2D* point);
     int getX();
     void setX(int _x);
     int getY();
@@ -28,6 +30,11 @@ Point2D::Point2D(int _x, int _y)
 {
     this->x = _x;
     this->y = _y;
+}
+Point2D::Point2D(const Point2D* point)
+{
+    this->x = point->x;
+    this->y = point->y;
 }
 int Point2D::getX()
 {
@@ -117,6 +124,8 @@ private:
     // булевая переменная - будет ли комната делиться ещё
 public:
     Room(int _id, Point2D* _startPoint, Point2D* _endPoint, int _isdivideComplete);
+    Room(int _id, int _startPointX, int _startPointY, int _endPointX, int _EndPointY, int _isdivideComplete);
+    Room(const Room* room);
     int getId();
     Point2D* getStartPoint();
     Point2D* getEndPoint();
@@ -129,6 +138,20 @@ Room::Room(int _id, Point2D* _startPoint, Point2D* _endPoint, int _isdivideCompl
     this->startPoint = _startPoint;
     this->endPoint = _endPoint;
     this->isdivideComplete = _isdivideComplete;
+}
+Room::Room(int _id, int _startPointX, int _startPointY, int _endPointX, int _EndPointY, int _isdivideComplete)
+{
+    this->id = _id;
+    this->startPoint = new Point2D(_startPointX, _startPointY);
+    this->endPoint = new Point2D(_endPointX, _EndPointY);
+    this->isdivideComplete = _isdivideComplete;
+}
+Room::Room(const Room* room)
+{
+    this->id = room->id + 1;
+    this->startPoint = new Point2D(room->startPoint);
+    this->endPoint = new Point2D(room->endPoint);
+    this->isdivideComplete = room->isdivideComplete;
 }
 Point2D* Room::getStartPoint()
 {
@@ -162,6 +185,8 @@ private:
     int isConnectComplete = 0;
 public:
     RoomConnected(int _roomIndex, Point2D* _wallStart, Point2D* _wallEnd, int _weight);
+    RoomConnected(int _roomIndex, int _wallStartPointX, int _wallStartPointY, int _wallEndPointX, int _wallEndPointY, int _weight);
+    RoomConnected(const RoomConnected* roomConnected);
     Point2D* getWallStart();
     Point2D* getWallEnd();
     int getRoomIndex();
@@ -170,6 +195,27 @@ public:
     int getIsConnectComplete();
     void setIsConnectComplete(int _isConnectComplete);
 };
+RoomConnected::RoomConnected(int _roomIndex, Point2D* _wallStart, Point2D* _wallEnd, int _weight)
+{
+    this->roomIndex = _roomIndex;
+    this->wallStart = _wallStart;
+    this->wallEnd = _wallEnd;
+    this->weight = _weight;
+}
+RoomConnected::RoomConnected(int _roomIndex, int _wallStartPointX, int _wallStartPointY, int _wallEndPointX, int _wallEndPointY, int _weight)
+{
+    this->roomIndex = _roomIndex;
+    this->wallStart = new Point2D(_wallStartPointX, _wallStartPointY);
+    this->wallEnd = new Point2D(_wallEndPointX, _wallEndPointY);
+    this->weight = _weight;
+}
+RoomConnected::RoomConnected(const RoomConnected* roomConnected)
+{
+    this->roomIndex = roomConnected->roomIndex;
+    this->wallStart = new Point2D(roomConnected->wallStart);
+    this->wallEnd = new Point2D(roomConnected->wallEnd);
+    this->weight = roomConnected->weight;
+}
 
 Point2D* RoomConnected::getWallStart()
 {
@@ -201,24 +247,17 @@ void RoomConnected::setIsConnectComplete(int _isConnectComplete)
 }
 
 
-RoomConnected::RoomConnected(int _roomIndex, Point2D* _wallStart, Point2D* _wallEnd, int _weight)
-{
-    this->roomIndex = _roomIndex;
-    this->wallStart = _wallStart;
-    this->wallEnd = _wallEnd;
-    this->weight = _weight;
-
-}
 
 class RoomConnection {
 private:
-    Room *curRoom;
+    std::unique_ptr<Room> curRoom;
     // текущая комната
     RoomConnected* connectedRooms; // выделить память !!!
     int connectedCount = 0;
     // её соседи (массив)
 public:
     RoomConnection(Room* _curRoom, RoomConnected* _connectedRooms, int _ConnectedCount);
+    ~RoomConnection();
     Room* getCurRoom();
     void setCurRoom(Room* _curRoom);
     RoomConnected* getConnectedRooms();
@@ -229,17 +268,17 @@ public:
 };
 RoomConnection::RoomConnection(Room* _curRoom, RoomConnected* _connectedRooms, int _ConnectedCount)
 {
-    this->curRoom = _curRoom;
+    this->curRoom = std::make_unique<Room>(_curRoom);
     this->connectedRooms = _connectedRooms;
     this->connectedCount = _ConnectedCount;
 }
 Room* RoomConnection::getCurRoom()
 {
-    return this->curRoom;
+    return this->curRoom.get();
 }
 void RoomConnection::setCurRoom(Room* _curRoom)
 {
-    this->curRoom = _curRoom;
+    this->curRoom = std::make_unique<Room>(_curRoom);
 }
 RoomConnected* RoomConnection::getConnectedRooms()
 {
@@ -261,12 +300,25 @@ void RoomConnection::setConnectedCount(int _connectedCount)
 {
     this->connectedCount = _connectedCount;
 }
+RoomConnection::~RoomConnection()
+{
+
+}
+
 
 
 int randomInt(int _min, int _max)
 {
     int r = rand() % (_max - _min + 1) + _min;
     return r;
+}
+
+int& maxValue(int& a, int& b)
+{
+    if (a > b)
+        return a;
+    else 
+        return b;
 }
 
 // -----------------< graphic >----------------------
@@ -362,7 +414,7 @@ public:
     LevelGenerator();
     ~LevelGenerator();
 private:
-    void roomArrayToMap(RoomConnection* roomsGraph, int n, char* map, Point2D mapSize);
+    void roomArrayToMap(RoomConnection* roomsGraph, int n, char* map, Point2D* mapSize);
     Room* divideRooms(Room* rooms, int* n, LevelGenerParams* lvlGenParams);
     void makeRoomGraph(Room* rooms, int n, RoomConnection* roomsGraph);
     void makeRoomConnections(int n, RoomConnection* roomsGraph);
@@ -371,14 +423,14 @@ private:
 LevelGenerator::LevelGenerator() {};
 LevelGenerator::~LevelGenerator() {};
 
-void LevelGenerator::roomArrayToMap(RoomConnection* roomsGraph, int n, char* map, Point2D mapSize)
+void LevelGenerator::roomArrayToMap(RoomConnection* roomsGraph, int n, char* map, Point2D *mapSize)
 {
     // заполняем все стенами
-    for (int y = 0; y < mapSize.getY(); y++)
+    for (int y = 0; y < mapSize->getX(); y++)
     {
-        for (int x = 0; x < mapSize.getX(); x++)
+        for (int x = 0; x < mapSize->getX(); x++)
         {
-            *(map + y * mapSize.getX() + x) = WALL_TAG;
+            *(map + y * mapSize->getX() + x) = WALL_TAG;
         }
     }
 
@@ -391,7 +443,7 @@ void LevelGenerator::roomArrayToMap(RoomConnection* roomsGraph, int n, char* map
         {
             for (int x = roomsGraph[i].getCurRoom()->getStartPoint()->getX(); x <= roomsGraph[i].getCurRoom()->getEndPoint()->getX(); x++)
             {
-                *(map + y * mapSize.getX() + x) = EMPTY_TAG;
+                *(map + y * mapSize->getX() + x) = EMPTY_TAG;
             }
         }
         // TODO
@@ -400,7 +452,7 @@ void LevelGenerator::roomArrayToMap(RoomConnection* roomsGraph, int n, char* map
             // исправить два прохода на один!
             int randX = randomInt(roomsGraph[i].getConnectedRooms()[j].getWallStart()->getX(), roomsGraph[i].getConnectedRooms()[j].getWallEnd()->getX()),
                 randY = randomInt(roomsGraph[i].getConnectedRooms()[j].getWallStart()->getY(), roomsGraph[i].getConnectedRooms()[j].getWallEnd()->getY());
-            *(map + randY * mapSize.getX() + randX) = EMPTY_TAG;
+            *(map + randY * mapSize->getX() + randX) = EMPTY_TAG;
             /*if (roomsGraph[i].connectedRooms[j].isConnectComplete)
             {
                 for (int y = roomsGraph[i].connectedRooms[j].wallStart.y; y <= roomsGraph[i].connectedRooms[j].wallEnd.y; y++)
@@ -431,7 +483,7 @@ Room* LevelGenerator::divideRooms(Room* rooms, int *n, LevelGenerParams* lvlGenP
         int
             delta_x = rooms[i].getEndPoint()->getX() - rooms[i].getStartPoint()->getX(),
             delta_y = rooms[i].getEndPoint()->getY() - rooms[i].getStartPoint()->getY(),
-            delta_max = max(delta_x, delta_y);
+            delta_max = maxValue(delta_x, delta_y);
         
         rooms[i].setDivideComplete(
             lvlGenParams->getMaxRoomSize() > delta_max &&
@@ -524,8 +576,8 @@ int commonInterval(int start1, int end1, int start2, int end2, int* commonStart,
     if (end1 >= start2 && start1 <= end2)
     { // проверка пересекаются ли отрезки
         
-        *commonStart = max(start1, start2);
-        *commonEnd = min(end1, end2);
+        *commonStart = maxValue(start1, start2);
+        *commonEnd = maxValue(end1, end2);
         // общий отрезок
 
         return 1;
@@ -726,6 +778,8 @@ void LevelGenerator::startGeneration(Level* level, LevelGenerParams* lvlGenParam
 {
 
     Room* rooms = (Room*)malloc(sizeof(Room));
+        //std::unique_ptr<Room> rooms new (Room*)malloc(sizeof(Room));
+
     // массив комнат
     int n = 1;
     rooms[0] = Room(
@@ -745,7 +799,7 @@ void LevelGenerator::startGeneration(Level* level, LevelGenerParams* lvlGenParam
     makeRoomConnections(n, roomsGraph);
     // Алгоритм Прима - строим минимальное остовное дерево взвешенного связного неориентированного графа,
     // где веса ребер - веса связей комнат RoomConnected.weight
-    roomArrayToMap(roomsGraph, n, level->getMap(), *level->getMapSize());
+    roomArrayToMap(roomsGraph, n, level->getMap(), level->getMapSize());
     // инициализируем level.map
 
     delete(rooms);
@@ -760,8 +814,24 @@ int main()
 
     Level* level = new Level(mapSize, (char*)malloc(mapSize->getX() * mapSize->getY() * sizeof(char)));
 
+    std::string input;
+    std::cout << "Input min rooms size: ";
+    getline(std::cin, input);
+    int minRoomSize = std::stoi(input);
 
-    LevelGenerParams* lvlGenParams = new LevelGenerParams(10, 20, 40);
+    std::cout << "Input max rooms size: ";
+    getline(std::cin, input);
+    int maxRoomSize = std::stoi(input);
+
+    std::cout << "Input probab of divide room: ";
+    getline(std::cin, input);
+    int probabOfDivide = std::stoi(input);
+
+    LevelGenerParams* lvlGenParams = new LevelGenerParams(minRoomSize, maxRoomSize, probabOfDivide);
+    std::cout << "min room size = " + std::to_string(minRoomSize) +"\n"+
+                 "max room size = " + std::to_string(maxRoomSize) + "\n" +
+                 "probab of divide = " + std::to_string(probabOfDivide) << std::endl;
+
 
     LevelGenerator* generator = new LevelGenerator();
     generator->startGeneration(level, lvlGenParams);
