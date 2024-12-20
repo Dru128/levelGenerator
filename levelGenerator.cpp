@@ -6,6 +6,7 @@
 #include <windows.h>
 #include <random>
 #include <string>
+#include <list>
 
 #define EMPTY_TAG '1'
 #define WALL_TAG '2'
@@ -13,18 +14,55 @@
 #define FINISH_TAG '5'
 #define ENEMY_TAG '6'
 
+class IPoint {
+public:
+    virtual ~IPoint() = default;
+    virtual float distanceToNull() = 0;
+    virtual void printPoint() = 0;
+};
 
-
-class Point2D {
-private:
+class Point2D: public IPoint {
+protected:
     int x, y;
 public:
     Point2D(int _x, int _y);
     Point2D(const Point2D* point);
+    ~Point2D() = default;
     int getX();
     void setX(int _x);
     int getY();
     void setY(int _y);
+    float distanceToNull() override {
+        return sqrt(x * x + y * y);
+    };  
+    void printPoint() override {
+        printf("x = %d\n", x);
+        printf("y = %d\n", y);
+    }
+    int operator == (Point2D* point)
+    {
+        return this->x == point->getX() && this->y == point->getY();
+    }
+    Point2D* operator + (Point2D* point)
+    {
+        return new Point2D(this->x + point->getX(), this->y + point->getY());
+    }
+    Point2D* operator - (Point2D* point) const
+    {
+        return new Point2D(this->x - point->getX(), this->y - point->getY());
+    }
+    Point2D* operator + (int num) const
+    {
+        return new Point2D(this->x + num, this->y + num);
+    }
+    Point2D* operator - (int num) const
+    {
+        return new Point2D(this->x - num, this->y - num);
+    }
+    Point2D* operator * (int num) const
+    {
+        return new Point2D(this->x * num, this->y * num);
+    }
 };
 Point2D::Point2D(int _x, int _y)
 {
@@ -52,6 +90,119 @@ void Point2D::setY(int _y)
 {
     this->y = _y;
 }
+
+class Point3D final : public Point2D
+{
+protected:
+    int z;
+public:
+    Point3D(int x, int y, int z);
+    Point3D(Point2D* point, int z);
+    Point3D(const Point3D* point);
+    ~Point3D();
+    int getZ();
+    void setZ(int z);
+    float distanceToNull() override {
+        return sqrt(x * x + y * y + z * z);
+    };
+    void printPoint() override {
+        Point2D::printPoint();
+        printf("z = %d\n", z);
+    }
+    Point3D* operator + (Point3D* point) const
+    {
+        return new Point3D(this->x + point->getX(), this->y + point->getY(), this->z + point->getZ());
+    }
+    Point3D* operator - (Point3D* point) const
+    {
+        return new Point3D(this->x - point->getX(), this->y - point->getY(), this->z - point->getZ());
+    }
+    Point3D* operator + (int num) const
+    {
+        return new Point3D(this->x + num, this->y + num, this->z + num);
+    }
+    Point3D* operator - (int num) const
+    {
+        return new Point3D(this->x - num, this->y - num, this->z - num);
+    }
+    Point3D* operator * (int num) const
+    {
+        return new Point3D(this->x * num, this->y * num, this->z * num);
+    }
+};
+Point3D::Point3D(int x, int y, int z) : Point2D(x, y)
+{
+    this->z = z;
+}
+Point3D::Point3D(Point2D* point, int z) : Point2D(point)
+{
+    this->z = z;
+}
+Point3D::Point3D(const Point3D* point): Point2D(point)
+{
+    this->z = point->z;
+}
+Point3D::~Point3D()
+{
+    // clear data
+}
+int Point3D::getZ()
+{
+    return this->z;
+}
+void Point3D::setZ(int z)
+{
+    this->z = z;
+}
+
+
+
+bool compareByDistance(const Point2D& left, const Point2D& right)
+{
+    return left.distanceToNull() > right.distanceToNull();
+}
+int main()
+{
+
+    std::list<Point2D> pointList{
+        new Point2D(1, 1),
+        new Point2D(3, 4),
+        new Point2D(1, 10),
+        new Point3D(1, 1, 1),
+        new Point3D(3, 0, 10),
+        new Point2D(8, 0),
+        new Point2D(1, 10),
+        new Point3D(0, 3, 4)
+    };
+    for (auto iter = pointList.begin(); iter != pointList.end(); iter++)
+    {
+        printf("x = %d, y = %d\n", iter->getX(), iter->getY());
+    }
+    // нашли первый элемент с такими координатами
+    std::list<Point2D>::iterator findIter = std::find(pointList.begin(), pointList.end(), new Point2D(1, 10));
+    printf("\nfind: x = %d, y = %d\n", findIter->getX(), findIter->getY());
+
+    // отсортированы по расстоянию к началу координат
+    std::sort(pointList.begin(), pointList.end(), compareByDistance);
+
+    /*Point2D* point2d = new Point2D(3, 4)
+    Point3D* point3d = new Point3D(point2d, 5);
+
+    printf("parent virtual: \n");
+    point2d->printPoint();
+
+    printf("child virtual: \n");
+    point3d->printPoint();\
+
+    printf("child perform parent virtual: \n");
+    ((Point2D)point3d).printPoint();
+
+    Point2D* point2d_2 = new Point2D(point2d);
+    point2d->setY(10);
+    Point2D* point2d_3 = point2d->operator+(point2d_2);
+    Point2D* point2d_4 = point2d + 10;*/
+}
+
 
 // данные уровня
 class Level {
@@ -887,37 +1038,38 @@ input_probabOfDivide:
 
 }
 
-int main()
-{
-    srand(time(0));
-    // инициализация генератора случайных чисел
-    Point2D* mapSize = getConsoleSize();
-    Level* level = new Level(mapSize, (char*)malloc(mapSize->getX() * mapSize->getY() * sizeof(char)));
 
-    LevelGenerParams* lvlGenParams = new LevelGenerParams(4, 15, 40);
-    LevelGenerator* generator = new LevelGenerator();
-    generator->startGeneration(level, lvlGenParams);
-    int loadMode;
-    /*generateLevel(level);
-    int (*loadLevel)(Level*);
-    
-     printf("0 from memory\n1 generate\n");
-    scanf("%d", &loadMode);
-    if (loadMode)
-         loadLevel = generateLevel;
-     else
-         loadLevel = loadMapFromFile;
-
-
-    loadLevel(level);
-    */
-    drawMap(level->getMap(), { 1, 1 }, 0, *level->getMapSize());
-    // отрисовка в консоли
-    scanf_s("%d", &loadMode); // пауза консоли
-}
+//int main()
+//{
+//    srand(time(0));
+//    // инициализация генератора случайных чисел
+//    Point2D* mapSize = getConsoleSize();
+//    Level* level = new Level(mapSize, (char*)malloc(mapSize->getX() * mapSize->getY() * sizeof(char)));
+//
+//    LevelGenerParams* lvlGenParams = new LevelGenerParams(4, 15, 40);
+//    LevelGenerator* generator = new LevelGenerator();
+//    generator->startGeneration(level, lvlGenParams);
+//    int loadMode;
+//    /*generateLevel(level);
+//    int (*loadLevel)(Level*);
+//    
+//     printf("0 from memory\n1 generate\n");
+//    scanf("%d", &loadMode);
+//    if (loadMode)
+//         loadLevel = generateLevel;
+//     else
+//         loadLevel = loadMapFromFile;
+//
+//
+//    loadLevel(level);
+//    */
+//    drawMap(level->getMap(), { 1, 1 }, 0, *level->getMapSize());
+//    // отрисовка в консоли
+//    scanf_s("%d", &loadMode); // пауза консоли
+//}
 /*
 10
 20
 40
-
 */
+
