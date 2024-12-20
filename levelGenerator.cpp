@@ -250,7 +250,7 @@ void RoomConnected::setIsConnectComplete(int _isConnectComplete)
 
 class RoomConnection {
 private:
-    std::unique_ptr<Room> curRoom;
+    Room* curRoom;
     // текущая комната
     RoomConnected* connectedRooms; // выделить память !!!
     int connectedCount = 0;
@@ -268,17 +268,17 @@ public:
 };
 RoomConnection::RoomConnection(Room* _curRoom, RoomConnected* _connectedRooms, int _ConnectedCount)
 {
-    this->curRoom = std::make_unique<Room>(_curRoom);
+    this->curRoom = _curRoom;
     this->connectedRooms = _connectedRooms;
     this->connectedCount = _ConnectedCount;
 }
 Room* RoomConnection::getCurRoom()
 {
-    return this->curRoom.get();
+    return this->curRoom;
 }
 void RoomConnection::setCurRoom(Room* _curRoom)
 {
-    this->curRoom = std::make_unique<Room>(_curRoom);
+    this->curRoom = _curRoom;
 }
 RoomConnected* RoomConnection::getConnectedRooms()
 {
@@ -407,6 +407,33 @@ Point2D* getConsoleSize()
     return size;
 }
 
+
+// выгрузка карты из базы данных
+/*int loadMapFromFile(Level* level)
+{
+    FILE* levelDB;
+    levelDB = fopen("level_1.txt", "r");
+    if (levelDB == NULL) return 0;
+    char symbol;
+
+    rewind(levelDB);
+    for (int y = 0; y < level->getMapSize()->getY(); y++)
+        for (int x = 0; x <= level->getMapSize()->getX(); x++)
+        {
+            symbol = getc(levelDB);
+            //putchar(symbol);
+            if (symbol == EOF) { return 0; }
+            else if (symbol == NULL) { return 0; }
+            else if (symbol == '\n') { break; }
+            else
+            {
+                *(level->getMap() + y * level->getMapSize()->getX() + x) = symbol;
+            }
+        }
+
+    fclose(levelDB);
+}*/
+
 class LevelGenerator {
 
 public:
@@ -450,8 +477,16 @@ void LevelGenerator::roomArrayToMap(RoomConnection* roomsGraph, int n, char* map
         for (int j = 0; j < roomsGraph[i].getConnectedCount() && roomsGraph[i].getConnectedRooms()[j].getIsConnectComplete(); j++)
         {
             // исправить два прохода на один!
-            int randX = randomInt(roomsGraph[i].getConnectedRooms()[j].getWallStart()->getX(), roomsGraph[i].getConnectedRooms()[j].getWallEnd()->getX()),
-                randY = randomInt(roomsGraph[i].getConnectedRooms()[j].getWallStart()->getY(), roomsGraph[i].getConnectedRooms()[j].getWallEnd()->getY());
+            int randX = randomInt(
+                roomsGraph[i].getConnectedRooms()[j].getWallStart()->getX(),
+                roomsGraph[i].getConnectedRooms()[j].getWallStart()->getX()
+                //roomsGraph[i].getConnectedRooms()[j].getWallEnd()->getX()
+                ),
+                randY = randomInt(
+                    roomsGraph[i].getConnectedRooms()[j].getWallStart()->getY(),
+                    roomsGraph[i].getConnectedRooms()[j].getWallStart()->getY()
+                    //roomsGraph[i].getConnectedRooms()[j].getWallEnd()->getY()
+                );
             *(map + randY * mapSize->getX() + randX) = EMPTY_TAG;
             /*if (roomsGraph[i].connectedRooms[j].isConnectComplete)
             {
@@ -778,7 +813,6 @@ void LevelGenerator::startGeneration(Level* level, LevelGenerParams* lvlGenParam
 {
 
     Room* rooms = (Room*)malloc(sizeof(Room));
-        //std::unique_ptr<Room> rooms new (Room*)malloc(sizeof(Room));
 
     // массив комнат
     int n = 1;
@@ -805,44 +839,85 @@ void LevelGenerator::startGeneration(Level* level, LevelGenerParams* lvlGenParam
     delete(rooms);
     delete(roomsGraph);
 }
+int generateLevel(Level* level)
+{
+
+    Point2D* mapSize = getConsoleSize();
+
+    level = new Level(mapSize, (char*)malloc(mapSize->getX() * mapSize->getY() * sizeof(char)));
+    LevelGenerParams* lvlGenParams;
+    std::string input;
+    int minRoomSize, maxRoomSize, probabOfDivide;
+input_minRoomSize:
+    try {
+        std::cout << "Input min rooms size: ";
+        getline(std::cin, input);
+        minRoomSize = std::stoi(input);
+    }
+    catch (std::exception& e) {
+        goto input_minRoomSize;
+    }
+input_maxRoomSize:
+    try {
+        std::cout << "Input max rooms size: ";
+        getline(std::cin, input);
+        maxRoomSize = std::stoi(input);
+    }
+    catch (std::exception& e) {
+        goto input_maxRoomSize;
+    }
+input_probabOfDivide:
+    try {
+        std::cout << "Input probab of divide room: ";
+        getline(std::cin, input);
+        probabOfDivide = std::stoi(input);
+    }
+    catch (std::exception& e) {
+        goto input_probabOfDivide;
+    }
+    lvlGenParams = new LevelGenerParams(minRoomSize, maxRoomSize, probabOfDivide);
+    std::cout << "min room size = " + std::to_string(minRoomSize) + "\n" +
+        "max room size = " + std::to_string(maxRoomSize) + "\n" +
+        "probab of divide = " + std::to_string(probabOfDivide) << std::endl;
+
+    
+    LevelGenerator* generator = new LevelGenerator();
+    generator->startGeneration(level, lvlGenParams);
+    return 1; // Success
+
+}
+
 int main()
 {
     srand(time(0));
     // инициализация генератора случайных чисел
-
     Point2D* mapSize = getConsoleSize();
-
     Level* level = new Level(mapSize, (char*)malloc(mapSize->getX() * mapSize->getY() * sizeof(char)));
 
-    std::string input;
-    std::cout << "Input min rooms size: ";
-    getline(std::cin, input);
-    int minRoomSize = std::stoi(input);
-
-    std::cout << "Input max rooms size: ";
-    getline(std::cin, input);
-    int maxRoomSize = std::stoi(input);
-
-    std::cout << "Input probab of divide room: ";
-    getline(std::cin, input);
-    int probabOfDivide = std::stoi(input);
-
-    LevelGenerParams* lvlGenParams = new LevelGenerParams(minRoomSize, maxRoomSize, probabOfDivide);
-    std::cout << "min room size = " + std::to_string(minRoomSize) +"\n"+
-                 "max room size = " + std::to_string(maxRoomSize) + "\n" +
-                 "probab of divide = " + std::to_string(probabOfDivide) << std::endl;
-
-
+    LevelGenerParams* lvlGenParams = new LevelGenerParams(4, 15, 40);
     LevelGenerator* generator = new LevelGenerator();
     generator->startGeneration(level, lvlGenParams);
-    delete(generator);
-    delete(lvlGenParams);
+    int loadMode;
+    /*generateLevel(level);
+    int (*loadLevel)(Level*);
+    
+     printf("0 from memory\n1 generate\n");
+    scanf("%d", &loadMode);
+    if (loadMode)
+         loadLevel = generateLevel;
+     else
+         loadLevel = loadMapFromFile;
 
-    printf("\n\n");
+
+    loadLevel(level);
+    */
     drawMap(level->getMap(), { 1, 1 }, 0, *level->getMapSize());
-    // отрисовка в консоли, вместо этого может быть другая функция
-    // или создание карты на движке, например на Unity
-
-    int k;
-    scanf_s("%d", &k); // пауза консоли
+    // отрисовка в консоли
+    scanf_s("%d", &loadMode); // пауза консоли
 }
+/*
+10
+20
+40
+
+*/
