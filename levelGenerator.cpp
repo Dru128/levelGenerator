@@ -14,55 +14,18 @@
 #define FINISH_TAG '5'
 #define ENEMY_TAG '6'
 
-class IPoint {
-public:
-    virtual ~IPoint() = default;
-    virtual float distanceToNull() = 0;
-    virtual void printPoint() = 0;
-};
 
-class Point2D: public IPoint {
+class Point2D {
 protected:
     int x, y;
 public:
     Point2D(int _x, int _y);
     Point2D(const Point2D* point);
-    ~Point2D() = default;
+    ~Point2D();
     int getX();
     void setX(int _x);
     int getY();
     void setY(int _y);
-    float distanceToNull() override {
-        return sqrt(x * x + y * y);
-    };  
-    void printPoint() override {
-        printf("x = %d\n", x);
-        printf("y = %d\n", y);
-    }
-    int operator == (Point2D* point)
-    {
-        return this->x == point->getX() && this->y == point->getY();
-    }
-    Point2D* operator + (Point2D* point)
-    {
-        return new Point2D(this->x + point->getX(), this->y + point->getY());
-    }
-    Point2D* operator - (Point2D* point) const
-    {
-        return new Point2D(this->x - point->getX(), this->y - point->getY());
-    }
-    Point2D* operator + (int num) const
-    {
-        return new Point2D(this->x + num, this->y + num);
-    }
-    Point2D* operator - (int num) const
-    {
-        return new Point2D(this->x - num, this->y - num);
-    }
-    Point2D* operator * (int num) const
-    {
-        return new Point2D(this->x * num, this->y * num);
-    }
 };
 Point2D::Point2D(int _x, int _y)
 {
@@ -74,6 +37,7 @@ Point2D::Point2D(const Point2D* point)
     this->x = point->x;
     this->y = point->y;
 }
+Point2D::~Point2D(){}
 int Point2D::getX()
 {
     return this->x;
@@ -90,119 +54,6 @@ void Point2D::setY(int _y)
 {
     this->y = _y;
 }
-
-class Point3D final : public Point2D
-{
-protected:
-    int z;
-public:
-    Point3D(int x, int y, int z);
-    Point3D(Point2D* point, int z);
-    Point3D(const Point3D* point);
-    ~Point3D();
-    int getZ();
-    void setZ(int z);
-    float distanceToNull() override {
-        return sqrt(x * x + y * y + z * z);
-    };
-    void printPoint() override {
-        Point2D::printPoint();
-        printf("z = %d\n", z);
-    }
-    Point3D* operator + (Point3D* point) const
-    {
-        return new Point3D(this->x + point->getX(), this->y + point->getY(), this->z + point->getZ());
-    }
-    Point3D* operator - (Point3D* point) const
-    {
-        return new Point3D(this->x - point->getX(), this->y - point->getY(), this->z - point->getZ());
-    }
-    Point3D* operator + (int num) const
-    {
-        return new Point3D(this->x + num, this->y + num, this->z + num);
-    }
-    Point3D* operator - (int num) const
-    {
-        return new Point3D(this->x - num, this->y - num, this->z - num);
-    }
-    Point3D* operator * (int num) const
-    {
-        return new Point3D(this->x * num, this->y * num, this->z * num);
-    }
-};
-Point3D::Point3D(int x, int y, int z) : Point2D(x, y)
-{
-    this->z = z;
-}
-Point3D::Point3D(Point2D* point, int z) : Point2D(point)
-{
-    this->z = z;
-}
-Point3D::Point3D(const Point3D* point): Point2D(point)
-{
-    this->z = point->z;
-}
-Point3D::~Point3D()
-{
-    // clear data
-}
-int Point3D::getZ()
-{
-    return this->z;
-}
-void Point3D::setZ(int z)
-{
-    this->z = z;
-}
-
-
-
-bool compareByDistance(const Point2D& left, const Point2D& right)
-{
-    return left.distanceToNull() > right.distanceToNull();
-}
-int main()
-{
-
-    std::list<Point2D> pointList{
-        new Point2D(1, 1),
-        new Point2D(3, 4),
-        new Point2D(1, 10),
-        new Point3D(1, 1, 1),
-        new Point3D(3, 0, 10),
-        new Point2D(8, 0),
-        new Point2D(1, 10),
-        new Point3D(0, 3, 4)
-    };
-    for (auto iter = pointList.begin(); iter != pointList.end(); iter++)
-    {
-        printf("x = %d, y = %d\n", iter->getX(), iter->getY());
-    }
-    // нашли первый элемент с такими координатами
-    std::list<Point2D>::iterator findIter = std::find(pointList.begin(), pointList.end(), new Point2D(1, 10));
-    printf("\nfind: x = %d, y = %d\n", findIter->getX(), findIter->getY());
-
-    // отсортированы по расстоянию к началу координат
-    std::sort(pointList.begin(), pointList.end(), compareByDistance);
-
-    /*Point2D* point2d = new Point2D(3, 4)
-    Point3D* point3d = new Point3D(point2d, 5);
-
-    printf("parent virtual: \n");
-    point2d->printPoint();
-
-    printf("child virtual: \n");
-    point3d->printPoint();\
-
-    printf("child perform parent virtual: \n");
-    ((Point2D)point3d).printPoint();
-
-    Point2D* point2d_2 = new Point2D(point2d);
-    point2d->setY(10);
-    Point2D* point2d_3 = point2d->operator+(point2d_2);
-    Point2D* point2d_4 = point2d + 10;*/
-}
-
 
 // данные уровня
 class Level {
@@ -240,6 +91,7 @@ private:
     // вероятность деления комнаты [0..100]
 public:
     LevelGenerParams(int _minRoomSize, int _maxRoomSize, int _probabOfDivide);
+    ~LevelGenerParams();
     int getMinRoomSize();
     int getMaxRoomSize();
     int getProbabOfDivide();
@@ -250,6 +102,7 @@ LevelGenerParams::LevelGenerParams(int _minRoomSize, int _maxRoomSize, int _prob
     this->maxRoomSize = _maxRoomSize;
     this->probabOfDivide = _probabOfDivide;
 }
+LevelGenerParams::~LevelGenerParams(){}
 int LevelGenerParams::getMinRoomSize()
 {
     return this->minRoomSize;
@@ -277,6 +130,7 @@ public:
     Room(int _id, Point2D* _startPoint, Point2D* _endPoint, int _isdivideComplete);
     Room(int _id, int _startPointX, int _startPointY, int _endPointX, int _EndPointY, int _isdivideComplete);
     Room(const Room* room);
+    ~Room();
     int getId();
     Point2D* getStartPoint();
     Point2D* getEndPoint();
@@ -304,6 +158,7 @@ Room::Room(const Room* room)
     this->endPoint = new Point2D(room->endPoint);
     this->isdivideComplete = room->isdivideComplete;
 }
+Room::~Room(){}
 Point2D* Room::getStartPoint()
 {
     return startPoint;
@@ -338,6 +193,7 @@ public:
     RoomConnected(int _roomIndex, Point2D* _wallStart, Point2D* _wallEnd, int _weight);
     RoomConnected(int _roomIndex, int _wallStartPointX, int _wallStartPointY, int _wallEndPointX, int _wallEndPointY, int _weight);
     RoomConnected(const RoomConnected* roomConnected);
+    ~RoomConnected();
     Point2D* getWallStart();
     Point2D* getWallEnd();
     int getRoomIndex();
@@ -367,6 +223,7 @@ RoomConnected::RoomConnected(const RoomConnected* roomConnected)
     this->wallEnd = new Point2D(roomConnected->wallEnd);
     this->weight = roomConnected->weight;
 }
+RoomConnected::~RoomConnected(){}
 
 Point2D* RoomConnected::getWallStart()
 {
@@ -423,6 +280,7 @@ RoomConnection::RoomConnection(Room* _curRoom, RoomConnected* _connectedRooms, i
     this->connectedRooms = _connectedRooms;
     this->connectedCount = _ConnectedCount;
 }
+RoomConnection::~RoomConnection(){}
 Room* RoomConnection::getCurRoom()
 {
     return this->curRoom;
@@ -451,27 +309,16 @@ void RoomConnection::setConnectedCount(int _connectedCount)
 {
     this->connectedCount = _connectedCount;
 }
-RoomConnection::~RoomConnection()
-{
-
-}
-
 
 
 int randomInt(int _min, int _max)
 {
-    int r = rand() % (_max - _min + 1) + _min;
-    return r;
+    if (_max - _min + 1 != 0) {
+        int r = rand() % (_max - _min + 1) + _min;
+        return r;
+    }
+    else return _min;
 }
-
-int& maxValue(int& a, int& b)
-{
-    if (a > b)
-        return a;
-    else 
-        return b;
-}
-
 // -----------------< graphic >----------------------
 // отрисовка карты
 void drawMap(const char* map, Point2D player, int countEnemies, Point2D mapSize)
@@ -521,7 +368,8 @@ void drawMap(const char* map, Point2D player, int countEnemies, Point2D mapSize)
                     break;
                 }
                 default: {
-                    putchar('*'); putchar('*');
+                    //putchar('*'); putchar('*');
+                    printf("%2.2d", *(map + y * mapSize.getX() + x));
                     break;
                 }
                 }
@@ -603,6 +451,11 @@ LevelGenerator::~LevelGenerator() {};
 
 void LevelGenerator::roomArrayToMap(RoomConnection* roomsGraph, int n, char* map, Point2D *mapSize)
 {
+    Point2D* walls = (Point2D*)calloc(n * n, sizeof(Point2D));
+    // индексы соседей в массиве roomsGraph
+    int wallsSize = 0;
+
+
     // заполняем все стенами
     for (int y = 0; y < mapSize->getX(); y++)
     {
@@ -621,24 +474,76 @@ void LevelGenerator::roomArrayToMap(RoomConnection* roomsGraph, int n, char* map
         {
             for (int x = roomsGraph[i].getCurRoom()->getStartPoint()->getX(); x <= roomsGraph[i].getCurRoom()->getEndPoint()->getX(); x++)
             {
+                if (y == roomsGraph[i].getCurRoom()->getEndPoint()->getY() && x == roomsGraph[i].getCurRoom()->getEndPoint()->getX())
+                    *(map + y * mapSize->getX() + x) = i;
+                else
                 *(map + y * mapSize->getX() + x) = EMPTY_TAG;
             }
         }
         // TODO
-        for (int j = 0; j < roomsGraph[i].getConnectedCount() && roomsGraph[i].getConnectedRooms()[j].getIsConnectComplete(); j++)
+        for (int j = 0; j < roomsGraph[i].getConnectedCount(); j++)
         {
+            if (roomsGraph[i].getConnectedRooms()[j].getIsConnectComplete())
+            {
+            *(map + roomsGraph[i].getConnectedRooms()[j].getWallEnd()->getY()  * mapSize->getX() + roomsGraph[i].getConnectedRooms()[j].getWallStart()->getX()) = FINISH_TAG;
+            printf("%d) [%2.2d][%2.2d]---[%2.2d][%2.2d]\n", i,
+                roomsGraph[i].getConnectedRooms()[j].getWallStart()->getX(), roomsGraph[i].getConnectedRooms()[j].getWallStart()->getY(),
+                roomsGraph[i].getConnectedRooms()[j].getWallEnd()->getX(), roomsGraph[i].getConnectedRooms()[j].getWallEnd()->getY()
+            );
+
+            }
+            /*int isContainCurEdge = 0,
+                first, second;
+            if (i < roomsGraph[i].getConnectedRooms()[j].getRoomIndex()) {
+                first = i;
+                second = j;
+            }
+            else {
+                first = roomsGraph[i].getConnectedRooms()[j].getRoomIndex();
+                for (int k = 0; k < roomsGraph[first].getConnectedCount(); k++)
+                    if (i == roomsGraph[first].getConnectedRooms()[k].getRoomIndex())
+                    {
+                        second = k;
+                        break;
+                    }
+            }
+            Point2D* curEdge = new Point2D(first, second); // ребро графа
+            // индексы: roomsGraph[x].getConnectedRooms()[y]
+
+            for (int k = 0; k < wallsSize && isContainCurEdge == 0; k++)
+                if (walls[k].getX() == curEdge->getX() && walls[k].getY() == curEdge->getY())
+                    isContainCurEdge = 1;
+          
+            if (isContainCurEdge == 0) 
+            {
+                walls[wallsSize++] = curEdge;
+                int 
+                    randX = randomInt(
+                        roomsGraph[curEdge->getX()].getConnectedRooms()[curEdge->getY()].getWallStart()->getX(),
+                        roomsGraph[curEdge->getX()].getConnectedRooms()[curEdge->getY()].getWallEnd()->getX()
+                    ),
+                    randY = randomInt(
+                        roomsGraph[curEdge->getX()].getConnectedRooms()[curEdge->getY()].getWallStart()->getY(),
+                        roomsGraph[curEdge->getX()].getConnectedRooms()[curEdge->getY()].getWallEnd()->getY()
+                    );
+                *(map + randY * mapSize->getX() + randX) = EMPTY_TAG;
+
+            }
+            else
+                delete (curEdge);
+            */
             // исправить два прохода на один!
-            int randX = randomInt(
-                roomsGraph[i].getConnectedRooms()[j].getWallStart()->getX(),
-                roomsGraph[i].getConnectedRooms()[j].getWallStart()->getX()
-                //roomsGraph[i].getConnectedRooms()[j].getWallEnd()->getX()
-                ),
-                randY = randomInt(
-                    roomsGraph[i].getConnectedRooms()[j].getWallStart()->getY(),
-                    roomsGraph[i].getConnectedRooms()[j].getWallStart()->getY()
-                    //roomsGraph[i].getConnectedRooms()[j].getWallEnd()->getY()
-                );
-            *(map + randY * mapSize->getX() + randX) = EMPTY_TAG;
+            //int randX = randomInt(
+            //    roomsGraph[i].getConnectedRooms()[j].getWallStart()->getX(),
+            //    //roomsGraph[i].getConnectedRooms()[j].getWallStart()->getX()
+            //    roomsGraph[i].getConnectedRooms()[j].getWallEnd()->getX()
+            //    ),
+            //    randY = randomInt(
+            //        roomsGraph[i].getConnectedRooms()[j].getWallStart()->getY(),
+            //        //roomsGraph[i].getConnectedRooms()[j].getWallStart()->getY()
+            //        roomsGraph[i].getConnectedRooms()[j].getWallEnd()->getY()
+            //    );
+            //*(map + randY * mapSize->getX() + randX) = EMPTY_TAG;
             /*if (roomsGraph[i].connectedRooms[j].isConnectComplete)
             {
                 for (int y = roomsGraph[i].connectedRooms[j].wallStart.y; y <= roomsGraph[i].connectedRooms[j].wallEnd.y; y++)
@@ -651,6 +556,10 @@ void LevelGenerator::roomArrayToMap(RoomConnection* roomsGraph, int n, char* map
             }*/
         }
     }
+    drawMap(map, { 1, 1 }, 0, mapSize);
+
+    for (int i = 0; i < wallsSize; i++)
+        printf("[%d][%d]\t", walls[i].getX(), roomsGraph[walls[i].getX()].getConnectedRooms()[walls[i].getY()].getRoomIndex());
 
 }
 
@@ -669,16 +578,22 @@ Room* LevelGenerator::divideRooms(Room* rooms, int *n, LevelGenerParams* lvlGenP
         int
             delta_x = rooms[i].getEndPoint()->getX() - rooms[i].getStartPoint()->getX(),
             delta_y = rooms[i].getEndPoint()->getY() - rooms[i].getStartPoint()->getY(),
-            delta_max = maxValue(delta_x, delta_y);
+            delta_max = max(delta_x, delta_y);
         
         rooms[i].setDivideComplete(
-            lvlGenParams->getMaxRoomSize() > delta_max &&
-            (
-             rooms[i].getIsdivideComplete() ||
-             lvlGenParams->getProbabOfDivide() < randomInt(0, 100) ||
-             delta_max < 2 * lvlGenParams->getMinRoomSize()
+            delta_max < lvlGenParams->getMaxRoomSize() && (
+                 rooms[i].getIsdivideComplete() ||
+                 lvlGenParams->getProbabOfDivide() < randomInt(0, 100) ||
+                 delta_max < 2 * lvlGenParams->getMinRoomSize() + 1
             )
         );
+        /*rooms[i].setDivideComplete(
+            lvlGenParams->getMaxRoomSize() > delta_max && (
+                 rooms[i].getIsdivideComplete() ||
+                 lvlGenParams->getProbabOfDivide() < randomInt(0, 100) ||
+                 delta_max < 2 * lvlGenParams->getMinRoomSize()
+            )
+        );*/
         // Здесь мы решаем будем делить комнату или просто скопируем в новый массив
         // И пометим её как неделимую 
 
@@ -692,13 +607,13 @@ Room* LevelGenerator::divideRooms(Room* rooms, int *n, LevelGenerParams* lvlGenP
                     rooms[i].getEndPoint()->getX() - lvlGenParams->getMinRoomSize()
                 );
                 // поделили на 2 комнаты по оси X
-                _rooms[new_n++] = Room (
+                _rooms[new_n++] = new Room (
                     rand(),
                     new Point2D( rooms[i].getStartPoint()->getX(), rooms[i].getStartPoint()->getY()),
                     new Point2D( divide - 1, rooms[i].getEndPoint()->getY()),
                     rooms[i].getIsdivideComplete()
                 );
-                _rooms[new_n++] = Room (
+                _rooms[new_n++] = new Room (
                     rand(),
                     new Point2D( divide + 1, rooms[i].getStartPoint()->getY()),
                     new Point2D( rooms[i].getEndPoint()->getX(), rooms[i].getEndPoint()->getY()),
@@ -714,13 +629,13 @@ Room* LevelGenerator::divideRooms(Room* rooms, int *n, LevelGenerParams* lvlGenP
                 );
 
                 // поделили на 2 комнаты по оси Y
-                _rooms[new_n++] = Room (
+                _rooms[new_n++] = new Room (
                     rand(),
                     new Point2D(rooms[i].getStartPoint()->getX(), rooms[i].getStartPoint()->getY()),
                     new Point2D( rooms[i].getEndPoint()->getX(), divide - 1),
                     rooms[i].getIsdivideComplete()
                 );
-                _rooms[new_n++] = Room (
+                _rooms[new_n++] = new Room (
                     rand(),
                     new Point2D(rooms[i].getStartPoint()->getX(), divide + 1 ),
                     new Point2D(rooms[i].getEndPoint()->getX(), rooms[i].getEndPoint()->getY()),
@@ -732,12 +647,7 @@ Room* LevelGenerator::divideRooms(Room* rooms, int *n, LevelGenerParams* lvlGenP
         {
             // комнату поделить нельзя 
             // копируем ее в новый массив комнат
-            _rooms[new_n++] = Room (
-                rand(),
-                new Point2D( rooms[i].getStartPoint()->getX(), rooms[i].getStartPoint()->getY()),
-                new Point2D( rooms[i].getEndPoint()->getX(), rooms[i].getEndPoint()->getY()),
-                rooms[i].getIsdivideComplete()
-            );
+            _rooms[new_n++] = new Room(rooms[i]);
         }
     }
 
@@ -759,12 +669,12 @@ Room* LevelGenerator::divideRooms(Room* rooms, int *n, LevelGenerParams* lvlGenP
 // поиск общего подотрезка на пересечении двух отрезков
 int commonInterval(int start1, int end1, int start2, int end2, int* commonStart, int* commonEnd)
 {
-    if (end1 >= start2 && start1 <= end2)
+    if (end1 >= start2 + 2 && start1 + 2 <= end2)
     { // проверка пересекаются ли отрезки
         
-        *commonStart = maxValue(start1, start2);
-        *commonEnd = maxValue(end1, end2);
-        // общий отрезок
+        *commonStart = max(start1, start2) + 1;
+        *commonEnd = min(end1, end2) - 1;
+        // общий подотрезок
 
         return 1;
     }
@@ -886,11 +796,13 @@ void LevelGenerator::makeRoomConnections(int n, RoomConnection* roomsGraph)
     int nLeaves = 1,
         *leaves = (int*)calloc(n, sizeof(int));
     // нужно выбрать первый лист и выделить память
-    leaves[0] = 1;
+    leaves[0] = 0;
     
 
     RoomConnected* minWeightRoom = NULL;
-    int isInitMinWeight = 0, targetLeaveIndex;
+    int isInitMinWeight, 
+        targetLeaveIndex;
+
     while (nLeaves != n)
     { // присоединяем пока листов не будет = вершинам (комнатам)
         isInitMinWeight = 0;
@@ -902,9 +814,9 @@ void LevelGenerator::makeRoomConnections(int n, RoomConnection* roomsGraph)
             { // перебираем соседей листов
                 if (roomsGraph[leaves[il]].getConnectedRooms()[i].getIsConnectComplete() == 0)
                 { // соединения еще нет (1)
-                    int flag = 1;
-                    for (int _il = 0; _il < nLeaves && flag; _il++)
-                        flag = leaves[_il] != roomsGraph[leaves[il]].getConnectedRooms()[i].getRoomIndex();
+                    int isNotLeaf = 1;
+                    for (int _il = 0; _il < nLeaves && isNotLeaf; _il++)
+                        isNotLeaf = leaves[_il] != roomsGraph[leaves[il]].getConnectedRooms()[i].getRoomIndex();
                     // это не два листа (2)
                    /* if (flag)
                     {
@@ -916,14 +828,32 @@ void LevelGenerator::makeRoomConnections(int n, RoomConnection* roomsGraph)
                         }
                     }*/
 
-                    printf("leaf = %d, second = %d, weight = %d \n", leaves[il], roomsGraph[leaves[il]].getConnectedRooms()[i].getRoomIndex(),roomsGraph[leaves[il]].getConnectedRooms()[i].getWeight());
-                    if ((isInitMinWeight == 0 || // инициализируем первым значением
-                        roomsGraph[leaves[il]].getConnectedRooms()[i].getWeight() < minWeightRoom->getWeight()) && flag)
+                    if (isNotLeaf)
                     {
-                        isInitMinWeight = 1;
-                        minWeightRoom = &roomsGraph[leaves[il]].getConnectedRooms()[i];
-                        targetLeaveIndex = il;
+                        if (isInitMinWeight)
+                        {
+                            if (roomsGraph[leaves[il]].getConnectedRooms()[i].getWeight() < minWeightRoom->getWeight())
+                            {
+                                isInitMinWeight = 1;
+                                minWeightRoom = &roomsGraph[leaves[il]].getConnectedRooms()[i];
+                                targetLeaveIndex = il;
+                            }
+                        }
+                        else
+                        {
+                            isInitMinWeight = 1;
+                            minWeightRoom = &roomsGraph[leaves[il]].getConnectedRooms()[i];
+                            targetLeaveIndex = il;
+                        }
                     }
+                    printf("leaf = %d, second = %d, weight = %d \n", leaves[il], roomsGraph[leaves[il]].getConnectedRooms()[i].getRoomIndex(),roomsGraph[leaves[il]].getConnectedRooms()[i].getWeight());
+                    //if ((isInitMinWeight == 0 || // инициализируем первым значением
+                    //    roomsGraph[leaves[il]].getConnectedRooms()[i].getWeight() < minWeightRoom->getWeight()) && isNotLeaf)
+                    //{
+                    //    isInitMinWeight = 1;
+                    //    minWeightRoom = &roomsGraph[leaves[il]].getConnectedRooms()[i];
+                    //    targetLeaveIndex = il;
+                    //}
 
                 }
             }
@@ -937,26 +867,39 @@ void LevelGenerator::makeRoomConnections(int n, RoomConnection* roomsGraph)
         {
             leaves[nLeaves] = minWeightRoom->getRoomIndex();
             nLeaves++;
+            int firstI = leaves[targetLeaveIndex],
+                secondI = minWeightRoom->getRoomIndex();
 
 
-            for (int k = 0; k < roomsGraph[leaves[targetLeaveIndex]].getConnectedCount(); k++)
-                if (roomsGraph[leaves[targetLeaveIndex]].getConnectedRooms()[k].getRoomIndex() == minWeightRoom->getRoomIndex())
+
+            for (int k = 0; k < roomsGraph[firstI].getConnectedCount(); k++)
+                if (roomsGraph[firstI].getConnectedRooms()[k].getRoomIndex() == secondI)
                 {
-                    roomsGraph[leaves[targetLeaveIndex]].getConnectedRooms()[k].setIsConnectComplete(1);
-                    printf("i = %d", k);
+                    roomsGraph[firstI].getConnectedRooms()[k].setIsConnectComplete(1);
 
+                    printf("[%d][%d]---[%d][%d]\n", 
+                        roomsGraph[firstI].getConnectedRooms()[k].getWallStart()->getX(), roomsGraph[firstI].getConnectedRooms()[k].getWallStart()->getY(), 
+                        roomsGraph[firstI].getConnectedRooms()[k].getWallEnd()->getX(), roomsGraph[firstI].getConnectedRooms()[k].getWallEnd()->getY()
+                    );
                     break;
                 }
 
-            for (int k = 0; k < roomsGraph[minWeightRoom->getRoomIndex()].getConnectedCount(); k++)
-                if (roomsGraph[minWeightRoom->getRoomIndex()].getConnectedRooms()[k].getRoomIndex() == leaves[targetLeaveIndex])
+            for (int k = 0; k < roomsGraph[secondI].getConnectedCount(); k++)
+                if (roomsGraph[secondI].getConnectedRooms()[k].getRoomIndex() == firstI)
                 {
-                    roomsGraph[minWeightRoom->getRoomIndex()].getConnectedRooms()[k].setIsConnectComplete(1);
-                    printf(" j = %d\n", k);
+                    roomsGraph[secondI].getConnectedRooms()[k].setIsConnectComplete(1);
 
+                    printf("[%d][%d]---[%d][%d]\n",
+                        roomsGraph[secondI].getConnectedRooms()[k].getWallStart()->getX(), roomsGraph[secondI].getConnectedRooms()[k].getWallStart()->getY(),
+                        roomsGraph[secondI].getConnectedRooms()[k].getWallEnd()->getX(), roomsGraph[secondI].getConnectedRooms()[k].getWallEnd()->getY()
+                    );
                     break;
                 }
+
+
         }
+        else
+            printf("MinWeightRoom not init!");
     }
 }
 
@@ -987,8 +930,8 @@ void LevelGenerator::startGeneration(Level* level, LevelGenerParams* lvlGenParam
     roomArrayToMap(roomsGraph, n, level->getMap(), level->getMapSize());
     // инициализируем level.map
 
-    delete(rooms);
-    delete(roomsGraph);
+    //free(rooms);
+    //free(roomsGraph);
 }
 int generateLevel(Level* level)
 {
@@ -1039,34 +982,34 @@ input_probabOfDivide:
 }
 
 
-//int main()
-//{
-//    srand(time(0));
-//    // инициализация генератора случайных чисел
-//    Point2D* mapSize = getConsoleSize();
-//    Level* level = new Level(mapSize, (char*)malloc(mapSize->getX() * mapSize->getY() * sizeof(char)));
-//
-//    LevelGenerParams* lvlGenParams = new LevelGenerParams(4, 15, 40);
-//    LevelGenerator* generator = new LevelGenerator();
-//    generator->startGeneration(level, lvlGenParams);
-//    int loadMode;
-//    /*generateLevel(level);
-//    int (*loadLevel)(Level*);
-//    
-//     printf("0 from memory\n1 generate\n");
-//    scanf("%d", &loadMode);
-//    if (loadMode)
-//         loadLevel = generateLevel;
-//     else
-//         loadLevel = loadMapFromFile;
-//
-//
-//    loadLevel(level);
-//    */
-//    drawMap(level->getMap(), { 1, 1 }, 0, *level->getMapSize());
-//    // отрисовка в консоли
-//    scanf_s("%d", &loadMode); // пауза консоли
-//}
+int main()
+{
+    srand(time(0));
+    // инициализация генератора случайных чисел
+    Point2D* mapSize = getConsoleSize();
+    Level* level = new Level(mapSize, (char*)malloc(mapSize->getX() * mapSize->getY() * sizeof(char)));
+
+    LevelGenerParams* lvlGenParams = new LevelGenerParams(5, 25, 70);
+    LevelGenerator* generator = new LevelGenerator();
+    generator->startGeneration(level, lvlGenParams);
+    int loadMode;
+    /*generateLevel(level);
+    int (*loadLevel)(Level*);
+    
+     printf("0 from memory\n1 generate\n");
+    scanf("%d", &loadMode);
+    if (loadMode)
+         loadLevel = generateLevel;
+     else
+         loadLevel = loadMapFromFile;
+
+
+    loadLevel(level);
+    */
+    //drawMap(level->getMap(), { 1, 1 }, 0, *level->getMapSize());
+    // отрисовка в консоли
+    scanf_s("%d", &loadMode); // пауза консоли
+}
 /*
 10
 20
