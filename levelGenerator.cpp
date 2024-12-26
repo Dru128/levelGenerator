@@ -6,10 +6,9 @@
 #include <windows.h>
 #include <random>
 #include <string>
-#include <list>
 
-#define EMPTY_TAG '1'
-#define WALL_TAG '2'
+#define EMPTY_TAG '0'
+#define WALL_TAG '1'
 #define START_TAG '4'
 #define FINISH_TAG '5'
 #define ENEMY_TAG '6'
@@ -369,7 +368,7 @@ void drawMap(const char* map, Point2D player, int countEnemies, Point2D mapSize)
                 }
                 default: {
                     //putchar('*'); putchar('*');
-                    printf("%2.2d", *(map + y * mapSize.getX() + x));
+                    //printf("%2.2d", *(map + y * mapSize.getX() + x));
                     break;
                 }
                 }
@@ -434,17 +433,15 @@ Point2D* getConsoleSize()
 }*/
 
 class LevelGenerator {
-
 public:
     void startGeneration(Level* level, LevelGenerParams* lvlGenParams);
     LevelGenerator();
     ~LevelGenerator();
-private:
-    void roomArrayToMap(RoomConnection* roomsGraph, int n, char* map, Point2D* mapSize);
+private:   
     Room* divideRooms(Room* rooms, int* n, LevelGenerParams* lvlGenParams);
     void makeRoomGraph(Room* rooms, int n, RoomConnection* roomsGraph);
     void makeRoomConnections(int n, RoomConnection* roomsGraph);
-
+    void roomArrayToMap(RoomConnection* roomsGraph, int n, char* map, Point2D* mapSize);
 };
 LevelGenerator::LevelGenerator() {};
 LevelGenerator::~LevelGenerator() {};
@@ -474,9 +471,9 @@ void LevelGenerator::roomArrayToMap(RoomConnection* roomsGraph, int n, char* map
         {
             for (int x = roomsGraph[i].getCurRoom()->getStartPoint()->getX(); x <= roomsGraph[i].getCurRoom()->getEndPoint()->getX(); x++)
             {
-                if (y == roomsGraph[i].getCurRoom()->getEndPoint()->getY() && x == roomsGraph[i].getCurRoom()->getEndPoint()->getX())
+               /* if (y == roomsGraph[i].getCurRoom()->getEndPoint()->getY() && x == roomsGraph[i].getCurRoom()->getEndPoint()->getX())
                     *(map + y * mapSize->getX() + x) = i;
-                else
+                else*/
                 *(map + y * mapSize->getX() + x) = EMPTY_TAG;
             }
         }
@@ -486,10 +483,10 @@ void LevelGenerator::roomArrayToMap(RoomConnection* roomsGraph, int n, char* map
             if (roomsGraph[i].getConnectedRooms()[j].getIsConnectComplete())
             {
             *(map + roomsGraph[i].getConnectedRooms()[j].getWallEnd()->getY()  * mapSize->getX() + roomsGraph[i].getConnectedRooms()[j].getWallStart()->getX()) = FINISH_TAG;
-            printf("%d) [%2.2d][%2.2d]---[%2.2d][%2.2d]\n", i,
+           /* printf("%d) [%2.2d][%2.2d]---[%2.2d][%2.2d]\n", i,
                 roomsGraph[i].getConnectedRooms()[j].getWallStart()->getX(), roomsGraph[i].getConnectedRooms()[j].getWallStart()->getY(),
                 roomsGraph[i].getConnectedRooms()[j].getWallEnd()->getX(), roomsGraph[i].getConnectedRooms()[j].getWallEnd()->getY()
-            );
+            );*/
 
             }
             /*int isContainCurEdge = 0,
@@ -558,8 +555,8 @@ void LevelGenerator::roomArrayToMap(RoomConnection* roomsGraph, int n, char* map
     }
     drawMap(map, { 1, 1 }, 0, mapSize);
 
-    for (int i = 0; i < wallsSize; i++)
-        printf("[%d][%d]\t", walls[i].getX(), roomsGraph[walls[i].getX()].getConnectedRooms()[walls[i].getY()].getRoomIndex());
+    //for (int i = 0; i < wallsSize; i++)
+    //    printf("[%d][%d]\t", walls[i].getX(), roomsGraph[walls[i].getX()].getConnectedRooms()[walls[i].getY()].getRoomIndex());
 
 }
 
@@ -570,9 +567,9 @@ Room* LevelGenerator::divideRooms(Room* rooms, int *n, LevelGenerParams* lvlGenP
 
     for (int i = 0; i < (*n); i++)
     {
-        printf("i = %d) [%d][%d] | [%d][%d]\n", i,
+       /* printf("i = %d) [%d][%d] | [%d][%d]\n", i,
             rooms[i].getStartPoint()->getX(), rooms[i].getStartPoint()->getY(),
-            rooms[i].getEndPoint()->getX(), rooms[i].getEndPoint()->getY());
+            rooms[i].getEndPoint()->getX(), rooms[i].getEndPoint()->getY());*/
 
 
         int
@@ -846,7 +843,7 @@ void LevelGenerator::makeRoomConnections(int n, RoomConnection* roomsGraph)
                             targetLeaveIndex = il;
                         }
                     }
-                    printf("leaf = %d, second = %d, weight = %d \n", leaves[il], roomsGraph[leaves[il]].getConnectedRooms()[i].getRoomIndex(),roomsGraph[leaves[il]].getConnectedRooms()[i].getWeight());
+                    //printf("leaf = %d, second = %d, weight = %d \n", leaves[il], roomsGraph[leaves[il]].getConnectedRooms()[i].getRoomIndex(),roomsGraph[leaves[il]].getConnectedRooms()[i].getWeight());
                     //if ((isInitMinWeight == 0 || // инициализируем первым значением
                     //    roomsGraph[leaves[il]].getConnectedRooms()[i].getWeight() < minWeightRoom->getWeight()) && isNotLeaf)
                     //{
@@ -862,7 +859,7 @@ void LevelGenerator::makeRoomConnections(int n, RoomConnection* roomsGraph)
         // мы выбрали вершину графа (комнату), 
         // которая граничит с одним из листов, 
         // не является листом и обладает минимальным весом
-        printf("nleaf = %d, isInit = %d, targetI = %d, roomIndex = %d\n", nLeaves, isInitMinWeight, leaves[targetLeaveIndex], minWeightRoom->getRoomIndex());
+        //printf("nleaf = %d, isInit = %d, targetI = %d, roomIndex = %d\n", nLeaves, isInitMinWeight, leaves[targetLeaveIndex], minWeightRoom->getRoomIndex());
         if (isInitMinWeight == 1)
         {
             leaves[nLeaves] = minWeightRoom->getRoomIndex();
@@ -877,10 +874,10 @@ void LevelGenerator::makeRoomConnections(int n, RoomConnection* roomsGraph)
                 {
                     roomsGraph[firstI].getConnectedRooms()[k].setIsConnectComplete(1);
 
-                    printf("[%d][%d]---[%d][%d]\n", 
+                   /* printf("[%d][%d]---[%d][%d]\n", 
                         roomsGraph[firstI].getConnectedRooms()[k].getWallStart()->getX(), roomsGraph[firstI].getConnectedRooms()[k].getWallStart()->getY(), 
                         roomsGraph[firstI].getConnectedRooms()[k].getWallEnd()->getX(), roomsGraph[firstI].getConnectedRooms()[k].getWallEnd()->getY()
-                    );
+                    );*/
                     break;
                 }
 
@@ -889,10 +886,10 @@ void LevelGenerator::makeRoomConnections(int n, RoomConnection* roomsGraph)
                 {
                     roomsGraph[secondI].getConnectedRooms()[k].setIsConnectComplete(1);
 
-                    printf("[%d][%d]---[%d][%d]\n",
+                    /*printf("[%d][%d]---[%d][%d]\n",
                         roomsGraph[secondI].getConnectedRooms()[k].getWallStart()->getX(), roomsGraph[secondI].getConnectedRooms()[k].getWallStart()->getY(),
                         roomsGraph[secondI].getConnectedRooms()[k].getWallEnd()->getX(), roomsGraph[secondI].getConnectedRooms()[k].getWallEnd()->getY()
-                    );
+                    );*/
                     break;
                 }
 
@@ -986,10 +983,10 @@ int main()
 {
     srand(time(0));
     // инициализация генератора случайных чисел
-    Point2D* mapSize = getConsoleSize();
+    Point2D* mapSize = /*getConsoleSize()*/ new Point2D(50, 50);
     Level* level = new Level(mapSize, (char*)malloc(mapSize->getX() * mapSize->getY() * sizeof(char)));
 
-    LevelGenerParams* lvlGenParams = new LevelGenerParams(5, 25, 70);
+    LevelGenerParams* lvlGenParams = new LevelGenerParams(5, 20, 100);
     LevelGenerator* generator = new LevelGenerator();
     generator->startGeneration(level, lvlGenParams);
     int loadMode;
