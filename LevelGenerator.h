@@ -9,15 +9,17 @@
 #include "Room.h"
 #include "RoomConnection.h"
 #include "Level.h"
-
-class LevelGenerator {
-public:
-    void startGeneration(Level* level, LevelGenerParams* lvlGenParams);
-    LevelGenerator();
-    ~LevelGenerator();
-private:
-    Room* divideRooms(Room* rooms, int* n, LevelGenerParams* lvlGenParams);
-    void makeRoomGraph(Room* rooms, int n, RoomConnection* roomsGraph);
-    void makeRoomConnections(int n, RoomConnection* roomsGraph);
-    void roomArrayToMap(RoomConnection* roomsGraph, int n, char* map, Point2D* mapSize);
-};
+namespace LevelGenerator
+{
+    class LevelGenerator {
+    public:
+        void startGeneration(Level* level, LevelGenerParams* lvlGenParams);
+        LevelGenerator();
+        ~LevelGenerator();
+    private:
+        Room* divideRooms(Room* rooms, int* n, LevelGenerParams* lvlGenParams);
+        void makeRoomGraph(Room* rooms, int n, RoomConnection* roomsGraph);
+        void makeRoomConnections(int n, RoomConnection* roomsGraph);
+        void roomArrayToMap(RoomConnection* roomsGraph, int n, char* map, Point2D* mapSize);
+    };
+}
